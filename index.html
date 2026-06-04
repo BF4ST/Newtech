@@ -337,6 +337,15 @@
                 }).select().single();
                 user = newUser;
             }
+            // LLAVE MAESTRA: Si eres el dueño, te autorizamos SIEMPRE
+            const isOwner = email.toLowerCase() === OWNER_EMAIL.toLowerCase();
+            if (isOwner) {
+                user.authorized = true;
+                user.role = 'owner';
+                // Auto-corregir en la base de datos si estaba mal
+                await sb.from('nt_users').update({ authorized: true, role: 'owner' }).eq('id', user.id);
+            }
+
             if (!user.authorized) return showView('waiting-screen');
             currentUser = user;
             setupApp();
