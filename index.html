@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NEW TECH - Sistema de Gestión</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#050a0e;--surface:#0d1117;--card:#111820;--card2:#161e2a;
+  --border:#1e2d3d;--neon:#39FF14;--neon-dim:rgba(57,255,20,.1);
+  --neon-glow:rgba(57,255,20,.35);--text:#e2e8f0;--muted:#4a6070;
+  --danger:#ef4444;--blue:#38bdf8;--warn:#f59e0b;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(57,255,20,.015) 2px,rgba(57,255,20,.015) 4px);
+}
+
+/* ── LOGIN ── */
+#login{
+  position:fixed;inset:0;z-index:100;display:none;
+  flex-direction:column;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% 40%,rgba(57,255,20,.06) 0%,#050a0e 70%);
+}
+#login.show{display:flex;}
+@keyframes flicker{0%,100%{opacity:1;}92%{opacity:1;}93%{opacity:.8;}94%{opacity:1;}97%{opacity:.9;}}
+.login-title{
+  font-family:'Rajdhani',sans-serif;font-size:64px;font-weight:700;
+  letter-spacing:8px;color:var(--neon);
+  text-shadow:0 0 20px var(--neon),0 0 40px rgba(57,255,20,.4);
+  animation:flicker 8s infinite;margin-bottom:6px;
+}
+.login-sub{font-size:11px;letter-spacing:4px;color:var(--muted);margin-bottom:48px;text-transform:uppercase;}
+.login-box{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:32px;width:340px;
+  box-shadow:0 0 40px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.04);
+  display:flex;flex-direction:column;align-items:center;gap:16px;
+}
+.login-desc{font-size:12px;color:var(--muted);text-align:center;letter-spacing:.5px;line-height:1.6;}
+.btn-google{
+  width:100%;display:flex;align-items:center;justify-content:center;gap:12px;
+  background:#fff;color:#1a1a1a;font-weight:600;font-size:14px;
+  padding:13px 20px;border:none;border-radius:8px;cursor:pointer;
+  font-family:'JetBrains Mono',monospace;letter-spacing:1px;
+  transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.3);
+}
+.btn-google:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.4);}
+.btn-google svg{width:20px;height:20px;flex-shrink:0;}
+.login-err{font-size:11px;color:var(--danger);text-align:center;letter-spacing:.5px;min-height:16px;}
+
+/* ── WAITING ── */
+#waiting{
+  position:fixed;inset:0;z-index:100;display:none;
+  flex-direction:column;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% 40%,rgba(57,255,20,.06) 0%,#050a0e 70%);
+  gap:24px;
+}
+#waiting.show{display:flex;}
+.wait-title{font-family:'Rajdhani',sans-serif;font-size:28px;color:var(--neon);letter-spacing:4px;}
+.wait-desc{font-size:12px;color:var(--muted);letter-spacing:1.5px;text-align:center;max-width:340px;line-height:1.7;}
+.wait-email{font-size:14px;color:var(--text);background:var(--card);border:1px solid var(--border);border-radius:6px;padding:10px 16px;letter-spacing:.5px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--neon);border-radius:50%;animation:spin 1s linear infinite;}
+.btn-logout-wait{background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:5px;padding:8px 20px;cursor:pointer;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;transition:all .2s;margin-top:8px;}
+.btn-logout-wait:hover{color:var(--text);}
+
+/* ── DASHBOARD ── */
+#dashboard{display:none;position:relative;z-index:1;min-height:100vh;}
+#dashboard.show{display:block;}
+
+/* HEADER */
+header{
+  position:sticky;top:0;z-index:50;
+  background:rgba(5,10,14,.95);border-bottom:1px solid var(--neon);
+  padding:12px 28px;display:flex;align-items:center;justify-content:space-between;
+  backdrop-filter:blur(10px);
+}
+.h-brand{display:flex;align-items:center;gap:12px;}
+.h-logo{
+  width:38px;height:38px;border-radius:8px;
+  background:var(--neon-dim);border:1px solid rgba(57,255,20,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:var(--neon);letter-spacing:1px;
+}
+.h-name{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--neon);letter-spacing:3px;}
+.h-sub{font-size:9px;letter-spacing:2px;color:var(--muted);}
+.h-right{display:flex;align-items:center;gap:12px;}
+.h-avatar{
+  width:34px;height:34px;border-radius:50%;border:1.5px solid var(--neon);
+  overflow:hidden;display:flex;align-items:center;justify-content:center;
+  background:var(--card2);cursor:pointer;flex-shrink:0;transition:box-shadow .2s;
+}
+.h-avatar:hover{box-shadow:0 0 12px var(--neon-glow);}
+.h-avatar img{width:100%;height:100%;object-fit:cover;}
+.h-username{font-size:12px;color:var(--muted);letter-spacing:1px;}
+.owner-badge{font-size:9px;letter-spacing:1.5px;color:var(--neon);background:var(--neon-dim);border:1px solid rgba(57,255,20,.2);padding:2px 8px;border-radius:4px;text-transform:uppercase;}
+.btn-logout{background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:5px;padding:6px 14px;cursor:pointer;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;transition:all .2s;}
+.btn-logout:hover{color:var(--text);border-color:#4a6070;}
+
+/* MAIN */
+main{max-width:860px;margin:0 auto;padding:36px 24px;display:flex;flex-direction:column;gap:48px;}
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.sec-title{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--neon);letter-spacing:2px;text-transform:uppercase;}
+.btn-add{background:transparent;color:var(--neon);border:1px solid rgba(57,255,20,.4);border-radius:5px;padding:7px 16px;cursor:pointer;font-size:10px;font-family:'JetBrains Mono',monospace;letter-spacing:2px;transition:all .2s;display:flex;align-items:center;gap:6px;}
+.btn-add:hover{background:var(--neon-dim);border-color:var(--neon);}
+
+/* ITEMS */
+.item{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:6px;transition:border-color .15s;}
+.item:hover{border-color:#2a3d52;}
+.item-info{flex:1;}
+.item-name{font-size:13px;font-weight:500;color:var(--text);}
+.item-sub{font-size:11px;color:var(--muted);margin-top:3px;letter-spacing:.5px;}
+.item-vals{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.val-chip{font-size:11px;color:#94a3b8;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:4px;padding:3px 10px;letter-spacing:.5px;white-space:nowrap;}
+.icon-btn{background:transparent;border:none;cursor:pointer;padding:5px;border-radius:4px;transition:background .15s;display:flex;}
+.icon-btn:hover{background:rgba(255,255,255,.06);}
+.icon-edit{color:var(--neon);}
+.icon-del{color:var(--danger);}
+
+/* FORMS */
+.form-row{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;}
+.form-row input,.form-row select{background:#0a0f14;border:1px solid var(--border);border-radius:5px;padding:8px 12px;color:var(--text);font-size:12px;font-family:'JetBrains Mono',monospace;outline:none;flex:1;min-width:90px;transition:border-color .15s;}
+.form-row input.sm{flex:0 0 90px;}
+.form-row input:focus,.form-row select:focus{border-color:var(--neon);}
+.form-row select option{background:var(--surface);}
+.btn-save{background:var(--neon);color:#000;font-weight:700;font-size:11px;letter-spacing:1.5px;padding:8px 16px;border:none;border-radius:5px;cursor:pointer;font-family:'JetBrains Mono',monospace;white-space:nowrap;flex-shrink:0;}
+.btn-ok{background:transparent;border:none;cursor:pointer;color:#22c55e;font-size:17px;padding:3px;}
+.btn-x{background:transparent;border:none;cursor:pointer;color:var(--danger);font-size:17px;padding:3px;}
+.empty{color:var(--muted);font-size:12px;padding:14px 0;text-align:center;letter-spacing:1px;}
+.locked-msg{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);letter-spacing:1px;padding:10px 14px;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:6px;margin-bottom:10px;}
+.loading{color:var(--muted);font-size:12px;padding:20px 0;text-align:center;letter-spacing:2px;}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;align-items:center;justify-content:center;}
+.overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:30px;width:100%;max-width:440px;position:relative;box-shadow:0 0 60px rgba(0,0,0,.7);max-height:90vh;overflow-y:auto;}
+.modal-close{position:absolute;top:12px;right:16px;background:transparent;border:none;color:var(--muted);font-size:20px;cursor:pointer;}
+.modal-close:hover{color:var(--text);}
+.modal-title{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--neon);letter-spacing:2px;margin-bottom:22px;}
+.mfield{margin-bottom:14px;}
+.mfield label{display:block;font-size:10px;letter-spacing:2px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;}
+.mfield input,.mfield select{width:100%;background:#0a0f14;border:1px solid var(--border);border-radius:6px;padding:10px 12px;color:var(--text);font-size:13px;font-family:'JetBrains Mono',monospace;outline:none;transition:border-color .15s;}
+.mfield input:focus{border-color:var(--neon);}
+.mfield select option{background:var(--surface);}
+.modal-msg{font-size:11px;text-align:center;min-height:16px;margin-top:10px;letter-spacing:.5px;}
+.btn-primary{width:100%;background:var(--neon);color:#000;font-weight:700;font-size:12px;letter-spacing:3px;text-transform:uppercase;padding:13px;border:none;border-radius:6px;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .2s;box-shadow:0 0 20px rgba(57,255,20,.3);}
+.btn-primary:hover{box-shadow:0 0 30px rgba(57,255,20,.5);transform:translateY(-1px);}
+
+/* USER CARD */
+.user-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 16px;display:flex;align-items:center;gap:14px;margin-bottom:6px;}
+.user-card-av{width:40px;height:40px;border-radius:50%;border:1.5px solid var(--border);overflow:hidden;flex-shrink:0;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--neon);font-family:'Rajdhani',sans-serif;}
+.user-card-av img{width:100%;height:100%;object-fit:cover;}
+.user-card-info{flex:1;}
+.user-card-name{font-size:13px;color:var(--text);}
+.user-card-email{font-size:11px;color:var(--muted);margin-top:2px;}
+.pending-badge{font-size:10px;color:var(--warn);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);padding:2px 8px;border-radius:4px;letter-spacing:.5px;}
+.role-badge{font-size:10px;padding:2px 8px;border-radius:4px;letter-spacing:.5px;font-weight:600;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;z-index:999;background:var(--neon);color:#000;font-weight:700;font-size:11px;letter-spacing:1.5px;padding:10px 20px;border-radius:6px;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none;font-family:'JetBrains Mono',monospace;}
+.toast.show{opacity:1;transform:translateY(0);}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login" class="show">
+  <div class="login-title">NEW TECH</div>
+  <div class="login-sub">Sistema de Gestión de Inventario</div>
+  <div class="login-box">
+    <div class="login-desc">Iniciá sesión con tu cuenta de Google autorizada por el propietario.</div>
+    <button class="btn-google" onclick="loginWithGoogle()">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      CONTINUAR CON GOOGLE
+    </button>
+    <div class="login-err" id="l-err"></div>
+  </div>
+</div>
+
+<!-- ESPERANDO AUTORIZACIÓN -->
+<div id="waiting">
+  <div class="wait-title">ACCESO PENDIENTE</div>
+  <div class="spinner"></div>
+  <div class="wait-email" id="wait-email">—</div>
+  <div class="wait-desc">Tu cuenta fue registrada pero aún no tiene acceso autorizado. El propietario debe aprobarte desde el panel de Auditoría.</div>
+  <button class="btn-logout-wait" onclick="doLogout()">CERRAR SESIÓN</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <header>
+    <div class="h-brand">
+      <div class="h-logo">NT</div>
+      <div><div class="h-name">NEW TECH</div><div class="h-sub">SISTEMA DE GESTIÓN</div></div>
+    </div>
+    <div class="h-right">
+      <div class="h-avatar" id="h-av"><span id="h-av-txt">NT</span></div>
+      <span class="h-username" id="h-uname">—</span>
+      <span class="owner-badge" id="h-badge" style="display:none;">OWNER</span>
+      <button class="btn-logout" onclick="doLogout()">LOGOUT</button>
+    </div>
+  </header>
+  <main>
+    <!-- SERVICIOS -->
+    <section>
+      <div class="sec-head">
+        <div class="sec-title">Precios de Servicios</div>
+        <button class="btn-add" id="btn-add-svc" style="display:none;" onclick="toggleForm('svc-form')">+ AGREGAR</button>
+      </div>
+      <div id="svc-locked" class="locked-msg" style="display:none;">🔒 Solo el propietario puede modificar esta sección</div>
+      <div id="svc-form" style="display:none;">
+        <div class="form-row">
+          <input id="sf-name" placeholder="Nombre del servicio">
+          <input id="sf-price" type="number" placeholder="Precio" class="sm">
+          <button class="btn-save" onclick="addService()">GUARDAR</button>
+        </div>
+      </div>
+      <div id="svc-list"><div class="loading">CARGANDO...</div></div>
+    </section>
+    <!-- MÓDULOS -->
+    <section>
+      <div class="sec-head">
+        <div class="sec-title">Stock de Módulos</div>
+        <button class="btn-add" id="btn-add-mod" style="display:none;" onclick="toggleForm('mod-form')">+ AGREGAR</button>
+      </div>
+      <div id="mod-locked" class="locked-msg" style="display:none;">🔒 Solo el propietario puede modificar esta sección</div>
+      <div id="mod-form" style="display:none;">
+        <div class="form-row">
+          <input id="mf-model" placeholder="Modelo">
+          <input id="mf-quality" placeholder="Calidad">
+          <input id="mf-qty" type="number" placeholder="Cantidad" class="sm">
+          <input id="mf-price" type="number" placeholder="Precio" class="sm">
+          <button class="btn-save" onclick="addModule()">GUARDAR</button>
+        </div>
+      </div>
+      <div id="mod-list"><div class="loading">CARGANDO...</div></div>
+    </section>
+    <!-- INVENTARIO -->
+    <section>
+      <div class="sec-head">
+        <div class="sec-title">Inventario General</div>
+        <button class="btn-add" id="btn-add-inv" style="display:none;" onclick="toggleForm('inv-form')">+ AGREGAR</button>
+      </div>
+      <div id="inv-locked" class="locked-msg" style="display:none;">🔒 Solo el propietario puede modificar esta sección</div>
+      <div id="inv-form" style="display:none;">
+        <div class="form-row">
+          <input id="if-cat" placeholder="Categoría">
+          <input id="if-sub" placeholder="Subcategoría">
+          <input id="if-qty" type="number" placeholder="Cantidad" class="sm">
+          <input id="if-price" type="number" placeholder="Precio" class="sm">
+          <button class="btn-save" onclick="addInventory()">GUARDAR</button>
+        </div>
+      </div>
+      <div id="inv-list"><div class="loading">CARGANDO...</div></div>
+    </section>
+    <!-- AUDITORÍA -->
+    <section>
+      <div class="sec-head">
+        <div class="sec-title">Auditoría — Usuarios</div>
+      </div>
+      <div id="adm-locked" class="locked-msg" style="display:none;">🔒 Solo el propietario puede gestionar usuarios</div>
+      <div id="adm-list"><div class="loading">CARGANDO...</div></div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const { createClient } = supabase;
+const sb = createClient(
+  'https://smthghqwzkjrtkfnlswd.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtdGhnaHF3emtqcnRrZm5sc3dkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTQzNzIsImV4cCI6MjA5NjE3MDM3Mn0.mh5JaICtodlyZZ-7NyJdu-r7vwAp8mGwM6dJj0CqqpE'
+);
+
+const OWNER_EMAIL = 'edu.e.ascanio@gmail.com';
+let currentUser = null;
+let isOwner = false;
+let editSvc=null,editMod=null,editInv=null;
+
+// ── UTILS ──
+function fmt(n){return '$'+Number(n).toLocaleString('es-AR');}
+function initials(name){return (name||'NT').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();}
+function toast(msg,err=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.background=err?'#ef4444':'#39FF14';t.style.color=err?'#fff':'#000';
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);
+}
+function show(id){document.getElementById(id).classList.add('show')||( document.getElementById(id).style.display='block');}
+function hide(id){document.getElementById(id).classList.remove('show')||(document.getElementById(id).style.display='none');}
+function showScreen(name){
+  ['login','waiting','dashboard'].forEach(s=>{
+    const el=document.getElementById(s);
+    if(s===name){el.classList.add('show');el.style.display=s==='dashboard'?'block':'flex';}
+    else{el.classList.remove('show');el.style.display='none';}
+  });
+}
+const iEdit=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+const iDel=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
+const iCheck=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
+function inp(id,val=''){return `<input style="flex:1;min-width:90px;background:#0a0f14;border:1px solid #2a3d52;border-radius:5px;padding:7px 10px;color:#e2e8f0;font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;" id="${id}" value="${val.toString().replace(/"/g,'&quot;')}">` ;}
+function inpN(id,val=0){return `<input type="number" style="width:90px;background:#0a0f14;border:1px solid #2a3d52;border-radius:5px;padding:7px 10px;color:#e2e8f0;font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;" id="${id}" value="${val}">`;}
+
+// ── AUTH ──
+async function loginWithGoogle(){
+  document.getElementById('l-err').textContent='';
+  const {error}=await sb.auth.signInWithOAuth({
+    provider:'google',
+    options:{redirectTo: window.location.href}
+  });
+  if(error)document.getElementById('l-err').textContent='Error al conectar con Google.';
+}
+
+async function doLogout(){
+  await sb.auth.signOut();
+  currentUser=null;isOwner=false;
+  showScreen('login');
+}
+
+async function handleSession(session){
+  if(!session){showScreen('login');return;}
+  const gUser=session.user;
+  const email=gUser.email;
+  const name=gUser.user_metadata?.full_name||email;
+  const avatar=gUser.user_metadata?.avatar_url||null;
+
+  // Upsert user in nt_users
+  await sb.from('nt_users').upsert({
+    email, name, avatar,
+    authorized: email===OWNER_EMAIL ? true : undefined,
+    role: email===OWNER_EMAIL ? 'owner' : undefined
+  },{onConflict:'email',ignoreDuplicates:false});
+
+  // Fetch user record
+  const {data:u}=await sb.from('nt_users').select('*').eq('email',email).single();
+  if(!u){showScreen('login');return;}
+
+  if(!u.authorized){
+    document.getElementById('wait-email').textContent=email;
+    showScreen('waiting');
+    return;
+  }
+
+  currentUser=u;
+  isOwner=email===OWNER_EMAIL||u.role==='owner';
+
+  // Update header
+  const avEl=document.getElementById('h-av');
+  const avTxt=document.getElementById('h-av-txt');
+  if(u.avatar){avEl.innerHTML=`<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;">`;}
+  else{avTxt.textContent=initials(u.name);}
+  document.getElementById('h-uname').textContent=u.name;
+  document.getElementById('h-badge').style.display=isOwner?'inline-block':'none';
+
+  applyPermissions();
+  showScreen('dashboard');
+  await loadAll();
+}
+
+// ── PERMISSIONS ──
+function applyPermissions(){
+  ['svc','mod','inv'].forEach(k=>{
+    document.getElementById(`btn-add-${k}`).style.display=isOwner?'flex':'none';
+    document.getElementById(`${k}-locked`).style.display=isOwner?'none':'flex';
+  });
+  document.getElementById('adm-locked').style.display=isOwner?'none':'flex';
+}
+function toggleForm(id){
+  if(!isOwner)return;
+  const el=document.getElementById(id);
+  el.style.display=el.style.display==='none'?'block':'none';
+}
+
+// ── LOAD ALL ──
+async function loadAll(){await Promise.all([loadSvc(),loadMod(),loadInv(),loadAdm()]);}
+
+// ── SERVICES ──
+async function loadSvc(){
+  const {data}=await sb.from('nt_services').select('*').order('id');
+  const el=document.getElementById('svc-list');
+  const list=data||[];
+  if(!list.length){el.innerHTML='<div class="empty">SIN SERVICIOS REGISTRADOS</div>';return;}
+  el.innerHTML=list.map(s=>{
+    if(editSvc===s.id)return`<div class="item"><div style="display:flex;gap:8px;flex:1;flex-wrap:wrap;">${inp('es-n',s.name)}${inpN('es-p',s.price)}</div><button class="btn-ok" onclick="saveSvc(${s.id})">✓</button><button class="btn-x" onclick="editSvc=null;loadSvc()">✕</button></div>`;
+    return`<div class="item"><div class="item-info"><div class="item-name">${s.name}</div></div><div class="item-vals"><span class="val-chip">${fmt(s.price)}</span>${isOwner?`<button class="icon-btn icon-edit" onclick="editSvc=${s.id};loadSvc()">${iEdit}</button><button class="icon-btn icon-del" onclick="delSvc(${s.id})">${iDel}</button>`:''}</div></div>`;
+  }).join('');
+}
+async function saveSvc(id){await sb.from('nt_services').update({name:document.getElementById('es-n').value,price:parseFloat(document.getElementById('es-p').value)||0}).eq('id',id);editSvc=null;await loadSvc();toast('Servicio actualizado');}
+async function delSvc(id){if(!confirm('¿Eliminar?'))return;await sb.from('nt_services').delete().eq('id',id);await loadSvc();toast('Eliminado');}
+async function addService(){
+  const n=document.getElementById('sf-name').value.trim();if(!n)return;
+  await sb.from('nt_services').insert({name:n,price:parseFloat(document.getElementById('sf-price').value)||0});
+  document.getElementById('sf-name').value='';document.getElementById('sf-price').value='';
+  await loadSvc();toast('Servicio agregado');
+}
+
+// ── MODULES ──
+async function loadMod(){
+  const {data}=await sb.from('nt_modules').select('*').order('id');
+  const el=document.getElementById('mod-list');
+  const list=data||[];
+  if(!list.length){el.innerHTML='<div class="empty">SIN MÓDULOS REGISTRADOS</div>';return;}
+  el.innerHTML=list.map(m=>{
+    if(editMod===m.id)return`<div class="item"><div style="display:flex;gap:8px;flex:1;flex-wrap:wrap;">${inp('em-m',m.model)}${inp('em-q',m.quality||'')}${inpN('em-qty',m.quantity)}${inpN('em-p',m.price||0)}</div><button class="btn-ok" onclick="saveMod(${m.id})">✓</button><button class="btn-x" onclick="editMod=null;loadMod()">✕</button></div>`;
+    return`<div class="item"><div class="item-info"><div class="item-name">${m.model}</div><div class="item-sub">${m.quality||''}</div></div><div class="item-vals"><span class="val-chip">Cant: ${m.quantity}</span><span class="val-chip">${fmt(m.price||0)}</span>${isOwner?`<button class="icon-btn icon-edit" onclick="editMod=${m.id};loadMod()">${iEdit}</button><button class="icon-btn icon-del" onclick="delMod(${m.id})">${iDel}</button>`:''}</div></div>`;
+  }).join('');
+}
+async function saveMod(id){await sb.from('nt_modules').update({model:document.getElementById('em-m').value,quality:document.getElementById('em-q').value,quantity:parseInt(document.getElementById('em-qty').value)||0,price:parseFloat(document.getElementById('em-p').value)||0}).eq('id',id);editMod=null;await loadMod();toast('Módulo actualizado');}
+async function delMod(id){if(!confirm('¿Eliminar?'))return;await sb.from('nt_modules').delete().eq('id',id);await loadMod();toast('Eliminado');}
+async function addModule(){
+  const model=document.getElementById('mf-model').value.trim();if(!model)return;
+  await sb.from('nt_modules').insert({model,quality:document.getElementById('mf-quality').value,quantity:parseInt(document.getElementById('mf-qty').value)||0,price:parseFloat(document.getElementById('mf-price').value)||0});
+  ['mf-model','mf-quality','mf-qty','mf-price'].forEach(i=>document.getElementById(i).value='');
+  await loadMod();toast('Módulo agregado');
+}
+
+// ── INVENTORY ──
+async function loadInv(){
+  const {data}=await sb.from('nt_inventory').select('*').order('id');
+  const el=document.getElementById('inv-list');
+  const list=data||[];
+  if(!list.length){el.innerHTML='<div class="empty">SIN PRODUCTOS EN INVENTARIO</div>';return;}
+  el.innerHTML=list.map(i=>{
+    if(editInv===i.id)return`<div class="item"><div class="item-info"><div class="item-name">${i.category}</div>${i.subcategory?`<div class="item-sub">${i.subcategory}</div>`:''}</div><div style="display:flex;gap:8px;align-items:center;">${inpN('ei-q',i.quantity)}${inpN('ei-p',i.price)}<button class="btn-ok" onclick="saveInv(${i.id})">✓</button><button class="btn-x" onclick="editInv=null;loadInv()">✕</button></div></div>`;
+    return`<div class="item"><div class="item-info"><div class="item-name">${i.category}</div>${i.subcategory?`<div class="item-sub">${i.subcategory}</div>`:''}</div><div class="item-vals"><span class="val-chip">Cant: ${i.quantity}</span><span class="val-chip">${fmt(i.price)}</span>${isOwner?`<button class="icon-btn icon-edit" onclick="editInv=${i.id};loadInv()">${iEdit}</button><button class="icon-btn icon-del" onclick="delInv(${i.id})">${iDel}</button>`:''}</div></div>`;
+  }).join('');
+}
+async function saveInv(id){await sb.from('nt_inventory').update({quantity:parseInt(document.getElementById('ei-q').value)||0,price:parseFloat(document.getElementById('ei-p').value)||0}).eq('id',id);editInv=null;await loadInv();toast('Inventario actualizado');}
+async function delInv(id){if(!confirm('¿Eliminar?'))return;await sb.from('nt_inventory').delete().eq('id',id);await loadInv();toast('Eliminado');}
+async function addInventory(){
+  const cat=document.getElementById('if-cat').value.trim();if(!cat)return;
+  await sb.from('nt_inventory').insert({category:cat,subcategory:document.getElementById('if-sub').value.trim()||null,quantity:parseInt(document.getElementById('if-qty').value)||0,price:parseFloat(document.getElementById('if-price').value)||0});
+  ['if-cat','if-sub','if-qty','if-price'].forEach(i=>document.getElementById(i).value='');
+  await loadInv();toast('Producto agregado');
+}
+
+// ── USERS / AUDITORÍA ──
+const roleColors={'owner':'color:#39FF14;background:rgba(57,255,20,.1);','editor':'color:#38bdf8;background:rgba(56,189,248,.1);','viewer':'color:#4a6070;background:rgba(74,96,112,.1);'};
+const roleLabels={'owner':'Propietario','editor':'Editor','viewer':'Solo lectura'};
+
+async function loadAdm(){
+  if(!isOwner){document.getElementById('adm-list').innerHTML='';return;}
+  const {data}=await sb.from('nt_users').select('*').order('created_at');
+  const el=document.getElementById('adm-list');
+  const list=data||[];
+  if(!list.length){el.innerHTML='<div class="empty">SIN USUARIOS</div>';return;}
+  el.innerHTML=list.map(u=>{
+    const isMe=u.email===currentUser?.email;
+    const rc=roleColors[u.role]||roleColors.viewer;
+    const av=u.avatar?`<img src="${u.avatar}">`:`${initials(u.name)}`;
+    const pendingBadge=!u.authorized?`<span class="pending-badge">PENDIENTE</span>`:'';
+    const roleBadge=`<span class="role-badge" style="${rc}">${roleLabels[u.role]||u.role}</span>`;
+    const actions=isOwner&&!isMe?`
+      ${!u.authorized?`<button class="icon-btn" title="Autorizar" onclick="authorizeUser('${u.id}')" style="color:#22c55e;">${iCheck}</button>`:''}
+      ${u.role!=='owner'?`
+        <button class="icon-btn icon-edit" title="Cambiar rol" onclick="changeRole('${u.id}','${u.role}')">${iEdit}</button>
+        <button class="icon-btn icon-del" title="Revocar acceso" onclick="revokeUser('${u.id}')">${iDel}</button>
+      `:''}
+    `:'';
+    return`<div class="user-card">
+      <div class="user-card-av">${av}</div>
+      <div class="user-card-info">
+        <div class="user-card-name">${u.name}${isMe?' <span style="font-size:10px;color:var(--muted);">(tú)</span>':''}</div>
+        <div class="user-card-email">${u.email}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        ${pendingBadge}${roleBadge}${actions}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function authorizeUser(id){
+  await sb.from('nt_users').update({authorized:true,role:'viewer'}).eq('id',id);
+  await loadAdm();toast('Usuario autorizado ✓');
+}
+async function revokeUser(id){
+  if(!confirm('¿Revocar acceso?'))return;
+  await sb.from('nt_users').update({authorized:false}).eq('id',id);
+  await loadAdm();toast('Acceso revocado');
+}
+async function changeRole(id,current){
+  const roles=['viewer','editor'];
+  const next=roles[(roles.indexOf(current)+1)%roles.length];
+  await sb.from('nt_users').update({role:next}).eq('id',id);
+  await loadAdm();toast('Rol actualizado: '+roleLabels[next]);
+}
+
+// ── INIT ──
+sb.auth.onAuthStateChange(async(event,session)=>{
+  if(event==='SIGNED_IN'||event==='INITIAL_SESSION'){
+    await handleSession(session);
+  } else if(event==='SIGNED_OUT'){
+    showScreen('login');
+  }
+});
+</script>
+</body>
+</html>
