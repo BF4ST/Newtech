@@ -161,6 +161,40 @@ main{max-width:860px;margin:0 auto;padding:36px 24px;display:flex;flex-direction
 .pending-badge{font-size:10px;color:var(--warn);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);padding:2px 8px;border-radius:4px;letter-spacing:.5px;}
 .role-badge{font-size:10px;padding:2px 8px;border-radius:4px;letter-spacing:.5px;font-weight:600;}
 
+
+/* ── SECTIONS ── */
+.section-block{position:relative;}
+.section-block.dragging{opacity:.4;}
+.section-block.drag-over{border-top:2px solid var(--neon);}
+.drag-handle{
+  cursor:grab;color:var(--muted);padding:4px 6px;
+  display:flex;align-items:center;border-radius:4px;
+  transition:color .15s;user-select:none;
+}
+.drag-handle:hover{color:var(--neon);}
+.drag-handle:active{cursor:grabbing;}
+.sec-head-left{display:flex;align-items:center;gap:8px;}
+.btn-add-section{
+  background:transparent;color:var(--muted);border:1px dashed var(--border);
+  border-radius:5px;padding:7px 16px;cursor:pointer;font-size:10px;
+  font-family:'JetBrains Mono',monospace;letter-spacing:2px;
+  transition:all .2s;display:flex;align-items:center;gap:6px;width:100%;
+  justify-content:center;margin-top:8px;
+}
+.btn-add-section:hover{color:var(--neon);border-color:rgba(57,255,20,.4);}
+.sec-title-input{
+  font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;
+  color:var(--neon);letter-spacing:2px;text-transform:uppercase;
+  background:transparent;border:none;border-bottom:1px solid var(--neon);
+  outline:none;width:auto;min-width:100px;
+}
+.btn-del-section{
+  background:transparent;border:none;cursor:pointer;
+  color:var(--danger);opacity:.5;padding:4px;border-radius:4px;
+  transition:opacity .15s;font-size:12px;
+}
+.btn-del-section:hover{opacity:1;}
+
 /* TOAST */
 .toast{position:fixed;bottom:24px;right:24px;z-index:999;background:var(--neon);color:#000;font-weight:700;font-size:11px;letter-spacing:1.5px;padding:10px 20px;border-radius:6px;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none;font-family:'JetBrains Mono',monospace;}
 .toast.show{opacity:1;transform:translateY(0);}
@@ -200,71 +234,19 @@ main{max-width:860px;margin:0 auto;padding:36px 24px;display:flex;flex-direction
 <div id="dashboard">
   <header>
     <div class="h-brand">
-      <div class="h-logo">NT</div>
+      <div class="h-logo" style="background:transparent;border:none;padding:0;overflow:hidden;"><img src="data:image/png;base64,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3qHxZEuwCZjFxcg78SkAiBNOfMH5mmirfQ1sGrQgIiLx0rQ7CrQqaFWwqmiCiaFuNRQY1W5UwZhui0ijg/7t1/+6ZcfGO/98W8vs/O/u+c9X31z8+qqliy5e8Mvbb1q24pWnXnh81ikzf/b7H1/8uYuQwx0P3Hbu5Wfceu8tow5t+/x1/7Jx69o/P/VAyyHFX93+H6d9+JS5752zbOWS11e9es5lZyELaHzgive/ue61J55/dNlbSz70pXNve+B3r6545ZmXn5x6wqQvXPcvm7avv/evf2ydXbz9/t9/7tufyUzP3vnAH2acOP2OB29vn91+2VWfWLdp1aNPP9I+e9T8c45btuKVV5e//O6LF6AI0xpQYDhrODRsAw4tB4YDA84ZzinOmnBiZLtChEaNMtxiVbfl0AI49uyjd/Zsm3vewc8vefacT53y2sqln//eFbNPOWjiMWM3bd34z9/6xK333fKH+2/50W+uv/W+3+YPzmzfvfWUj5341to3T774uG07t5x3xRmLX3vxKz/83FMvPX7Z1y959LlHbrjl+qt+eOWGLWvNaIMA4w4fd8W3PzEw1HPJVR+YtWj6pm3rLvriBbNOnnnMuXN39+48659Of23F0iu/96nnlj6zedvGmadOXb3hrXnnzFm9fuUJFx69efumD33+fU+99MS3f/K1R5995Pqbrrvmx19/bcWrGA3dFqiCJWs4tBRqsooCBau5sZMQJGm/i/tSlSOk4Bz0KA6mKyjs2bNbsTl1/umnffTUBx5+lMDtre2drd39/UNJHL+0bPHiN5bkc8UnX35q4pgJR889auv2rSveWpWmSSFf7O3veeDuv5x5wTm/+d3vtRgiyWVy99334B9uvzuwQS6bB6ktS7b8+f6/9g3133/3wxtXbY3juKu1KxNmFcye3l1/uueh95x/5l333lcplzJBdPqC07bt2iqCUqmUz2UHBvsfuOcv5174vv/8r991j+q+46577v7jfdls1ohxzhERhwQSuGYbi4R0Y/UTQWrChqQqqsBJr8vOsn5QEJhVi9ee9qFTfvlv/3HRGR89/WOnJHH87qNPHdM+/q21bw4ODd7z8/taiy3nffLcFStXB58Mzlh42hsr3xjoH9JKO++999liftuqHSBvAuMT8akPwiCwgXNpo1yFgc1EmlWYCZNSwqzOW3R+Z+voBx59QJxk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" style="width:38px;height:38px;object-fit:cover;border-radius:8px;"></div>
       <div><div class="h-name">NEW TECH</div><div class="h-sub">SISTEMA DE GESTIÓN</div></div>
     </div>
     <div class="h-right">
       <div class="h-avatar" id="h-av"><span id="h-av-txt">NT</span></div>
       <span class="h-username" id="h-uname">—</span>
-      <span class="owner-badge" id="h-badge" style="display:none;">OWNER</span>
       <button class="btn-logout" onclick="doLogout()">LOGOUT</button>
     </div>
   </header>
-  <main>
-    <!-- SERVICIOS -->
-    <section>
-      <div class="sec-head">
-        <div class="sec-title">Precios de Servicios</div>
-        <button class="btn-add" id="btn-add-svc" style="display:none;" onclick="toggleForm('svc-form')">+ AGREGAR</button>
-      </div>
-      <div id="svc-locked" class="locked-msg" style="display:none;">🔒 Solo el propietario puede modificar esta sección</div>
-      <div id="svc-form" style="display:none;">
-        <div class="form-row">
-          <input id="sf-name" placeholder="Nombre del servicio">
-          <input id="sf-price" type="number" placeholder="Precio" class="sm">
-          <button class="btn-save" onclick="addService()">GUARDAR</button>
-        </div>
-      </div>
-      <div id="svc-list"><div class="loading">CARGANDO...</div></div>
-    </section>
-    <!-- MÓDULOS -->
-    <section>
-      <div class="sec-head">
-        <div class="sec-title">Stock de Módulos</div>
-        <button class="btn-add" id="btn-add-mod" style="display:none;" onclick="toggleForm('mod-form')">+ AGREGAR</button>
-      </div>
-      <div id="mod-locked" class="locked-msg" style="display:none;">🔒 Solo el propietario puede modificar esta sección</div>
-      <div id="mod-form" style="display:none;">
-        <div class="form-row">
-          <input id="mf-model" placeholder="Modelo">
-          <input id="mf-quality" placeholder="Calidad">
-          <input id="mf-qty" type="number" placeholder="Cantidad" class="sm">
-          <input id="mf-price" type="number" placeholder="Precio" class="sm">
-          <button class="btn-save" onclick="addModule()">GUARDAR</button>
-        </div>
-      </div>
-      <div id="mod-list"><div class="loading">CARGANDO...</div></div>
-    </section>
-    <!-- INVENTARIO -->
-    <section>
-      <div class="sec-head">
-        <div class="sec-title">Inventario General</div>
-        <button class="btn-add" id="btn-add-inv" style="display:none;" onclick="toggleForm('inv-form')">+ AGREGAR</button>
-      </div>
-      <div id="inv-locked" class="locked-msg" style="display:none;">🔒 Solo el propietario puede modificar esta sección</div>
-      <div id="inv-form" style="display:none;">
-        <div class="form-row">
-          <input id="if-cat" placeholder="Categoría">
-          <input id="if-sub" placeholder="Subcategoría">
-          <input id="if-qty" type="number" placeholder="Cantidad" class="sm">
-          <input id="if-price" type="number" placeholder="Precio" class="sm">
-          <button class="btn-save" onclick="addInventory()">GUARDAR</button>
-        </div>
-      </div>
-      <div id="inv-list"><div class="loading">CARGANDO...</div></div>
-    </section>
-    <!-- AUDITORÍA -->
-    <section>
+  <main id="sections-container">
+    <!-- Dynamic sections rendered by JS -->
+    <!-- AUDITORÍA always at bottom -->
+    <section id="audit-section">
       <div class="sec-head">
         <div class="sec-title">Auditoría — Usuarios</div>
       </div>
@@ -286,7 +268,9 @@ const sb = createClient(
 const OWNER_EMAIL = 'edu.e.ascanio@gmail.com';
 let currentUser = null;
 let isOwner = false;
-let editSvc=null,editMod=null,editInv=null;
+let canEdit = false; // owner or editor
+let sections = []; // [{id, title, sort_order, items:[]}]
+let dragSrcIdx = null;
 
 // ── UTILS ──
 function fmt(n){return '$'+Number(n).toLocaleString('es-AR');}
@@ -296,8 +280,6 @@ function toast(msg,err=false){
   t.textContent=msg;t.style.background=err?'#ef4444':'#39FF14';t.style.color=err?'#fff':'#000';
   t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);
 }
-function show(id){document.getElementById(id).classList.add('show')||( document.getElementById(id).style.display='block');}
-function hide(id){document.getElementById(id).classList.remove('show')||(document.getElementById(id).style.display='none');}
 function showScreen(name){
   ['login','waiting','dashboard'].forEach(s=>{
     const el=document.getElementById(s);
@@ -308,8 +290,7 @@ function showScreen(name){
 const iEdit=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
 const iDel=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
 const iCheck=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
-function inp(id,val=''){return `<input style="flex:1;min-width:90px;background:#0a0f14;border:1px solid #2a3d52;border-radius:5px;padding:7px 10px;color:#e2e8f0;font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;" id="${id}" value="${val.toString().replace(/"/g,'&quot;')}">` ;}
-function inpN(id,val=0){return `<input type="number" style="width:90px;background:#0a0f14;border:1px solid #2a3d52;border-radius:5px;padding:7px 10px;color:#e2e8f0;font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;" id="${id}" value="${val}">`;}
+const iDrag=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1" fill="currentColor"/><circle cx="15" cy="5" r="1" fill="currentColor"/><circle cx="9" cy="12" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/><circle cx="9" cy="19" r="1" fill="currentColor"/><circle cx="15" cy="19" r="1" fill="currentColor"/></svg>`;
 
 // ── AUTH ──
 async function loginWithGoogle(){
@@ -320,48 +301,34 @@ async function loginWithGoogle(){
   });
   if(error)document.getElementById('l-err').textContent='Error al conectar con Google.';
 }
-
 async function doLogout(){
   await sb.auth.signOut();
-  currentUser=null;isOwner=false;
+  currentUser=null;isOwner=false;canEdit=false;
   showScreen('login');
 }
-
 async function handleSession(session){
   if(!session){showScreen('login');return;}
   const gUser=session.user;
   const email=gUser.email;
   const name=gUser.user_metadata?.full_name||email;
   const avatar=gUser.user_metadata?.avatar_url||null;
-
-  // Upsert user in nt_users
-  await sb.from('nt_users').upsert({
-    email, name, avatar,
-    authorized: email===OWNER_EMAIL ? true : undefined,
-    role: email===OWNER_EMAIL ? 'owner' : undefined
+  await sb.from('nt_users').upsert({email,name,avatar,
+    authorized:email===OWNER_EMAIL?true:undefined,
+    role:email===OWNER_EMAIL?'owner':undefined
   },{onConflict:'email',ignoreDuplicates:false});
-
-  // Fetch user record
   const {data:u}=await sb.from('nt_users').select('*').eq('email',email).single();
   if(!u){showScreen('login');return;}
-
   if(!u.authorized){
     document.getElementById('wait-email').textContent=email;
-    showScreen('waiting');
-    return;
+    showScreen('waiting');return;
   }
-
   currentUser=u;
   isOwner=email===OWNER_EMAIL||u.role==='owner';
-
-  // Update header
+  canEdit=isOwner||u.role==='editor';
   const avEl=document.getElementById('h-av');
-  const avTxt=document.getElementById('h-av-txt');
   if(u.avatar){avEl.innerHTML=`<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;">`;}
-  else{avTxt.textContent=initials(u.name);}
+  else{document.getElementById('h-av-txt').textContent=initials(u.name);}
   document.getElementById('h-uname').textContent=u.name;
-  document.getElementById('h-badge').style.display=isOwner?'inline-block':'none';
-
   applyPermissions();
   showScreen('dashboard');
   await loadAll();
@@ -369,79 +336,216 @@ async function handleSession(session){
 
 // ── PERMISSIONS ──
 function applyPermissions(){
-  ['svc','mod','inv'].forEach(k=>{
-    document.getElementById(`btn-add-${k}`).style.display=isOwner?'flex':'none';
-    document.getElementById(`${k}-locked`).style.display=isOwner?'none':'flex';
-  });
   document.getElementById('adm-locked').style.display=isOwner?'none':'flex';
 }
-function toggleForm(id){
-  if(!isOwner)return;
-  const el=document.getElementById(id);
-  el.style.display=el.style.display==='none'?'block':'none';
-}
+function canEditCheck(){return canEdit;}
 
 // ── LOAD ALL ──
-async function loadAll(){await Promise.all([loadSvc(),loadMod(),loadInv(),loadAdm()]);}
-
-// ── SERVICES ──
-async function loadSvc(){
-  const {data}=await sb.from('nt_services').select('*').order('id');
-  const el=document.getElementById('svc-list');
-  const list=data||[];
-  if(!list.length){el.innerHTML='<div class="empty">SIN SERVICIOS REGISTRADOS</div>';return;}
-  el.innerHTML=list.map(s=>{
-    if(editSvc===s.id)return`<div class="item"><div style="display:flex;gap:8px;flex:1;flex-wrap:wrap;">${inp('es-n',s.name)}${inpN('es-p',s.price)}</div><button class="btn-ok" onclick="saveSvc(${s.id})">✓</button><button class="btn-x" onclick="editSvc=null;loadSvc()">✕</button></div>`;
-    return`<div class="item"><div class="item-info"><div class="item-name">${s.name}</div></div><div class="item-vals"><span class="val-chip">${fmt(s.price)}</span>${isOwner?`<button class="icon-btn icon-edit" onclick="editSvc=${s.id};loadSvc()">${iEdit}</button><button class="icon-btn icon-del" onclick="delSvc(${s.id})">${iDel}</button>`:''}</div></div>`;
-  }).join('');
-}
-async function saveSvc(id){await sb.from('nt_services').update({name:document.getElementById('es-n').value,price:parseFloat(document.getElementById('es-p').value)||0}).eq('id',id);editSvc=null;await loadSvc();toast('Servicio actualizado');}
-async function delSvc(id){if(!confirm('¿Eliminar?'))return;await sb.from('nt_services').delete().eq('id',id);await loadSvc();toast('Eliminado');}
-async function addService(){
-  const n=document.getElementById('sf-name').value.trim();if(!n)return;
-  await sb.from('nt_services').insert({name:n,price:parseFloat(document.getElementById('sf-price').value)||0});
-  document.getElementById('sf-name').value='';document.getElementById('sf-price').value='';
-  await loadSvc();toast('Servicio agregado');
+async function loadAll(){
+  await loadSections();
+  await loadAdm();
 }
 
-// ── MODULES ──
-async function loadMod(){
-  const {data}=await sb.from('nt_modules').select('*').order('id');
-  const el=document.getElementById('mod-list');
-  const list=data||[];
-  if(!list.length){el.innerHTML='<div class="empty">SIN MÓDULOS REGISTRADOS</div>';return;}
-  el.innerHTML=list.map(m=>{
-    if(editMod===m.id)return`<div class="item"><div style="display:flex;gap:8px;flex:1;flex-wrap:wrap;">${inp('em-m',m.model)}${inp('em-q',m.quality||'')}${inpN('em-qty',m.quantity)}${inpN('em-p',m.price||0)}</div><button class="btn-ok" onclick="saveMod(${m.id})">✓</button><button class="btn-x" onclick="editMod=null;loadMod()">✕</button></div>`;
-    return`<div class="item"><div class="item-info"><div class="item-name">${m.model}</div><div class="item-sub">${m.quality||''}</div></div><div class="item-vals"><span class="val-chip">Cant: ${m.quantity}</span><span class="val-chip">${fmt(m.price||0)}</span>${isOwner?`<button class="icon-btn icon-edit" onclick="editMod=${m.id};loadMod()">${iEdit}</button><button class="icon-btn icon-del" onclick="delMod(${m.id})">${iDel}</button>`:''}</div></div>`;
-  }).join('');
-}
-async function saveMod(id){await sb.from('nt_modules').update({model:document.getElementById('em-m').value,quality:document.getElementById('em-q').value,quantity:parseInt(document.getElementById('em-qty').value)||0,price:parseFloat(document.getElementById('em-p').value)||0}).eq('id',id);editMod=null;await loadMod();toast('Módulo actualizado');}
-async function delMod(id){if(!confirm('¿Eliminar?'))return;await sb.from('nt_modules').delete().eq('id',id);await loadMod();toast('Eliminado');}
-async function addModule(){
-  const model=document.getElementById('mf-model').value.trim();if(!model)return;
-  await sb.from('nt_modules').insert({model,quality:document.getElementById('mf-quality').value,quantity:parseInt(document.getElementById('mf-qty').value)||0,price:parseFloat(document.getElementById('mf-price').value)||0});
-  ['mf-model','mf-quality','mf-qty','mf-price'].forEach(i=>document.getElementById(i).value='');
-  await loadMod();toast('Módulo agregado');
+// ══════════════════════════════════
+// DYNAMIC SECTIONS
+// ══════════════════════════════════
+async function loadSections(){
+  // Load sections from DB
+  const {data:secs}=await sb.from('nt_sections').select('*').order('sort_order');
+  // Load items for all sections
+  const {data:items}=await sb.from('nt_items').select('*').order('sort_order');
+  sections=(secs||[]).map(s=>({
+    ...s,
+    items:(items||[]).filter(i=>i.section_id===s.id)
+  }));
+  renderSections();
 }
 
-// ── INVENTORY ──
-async function loadInv(){
-  const {data}=await sb.from('nt_inventory').select('*').order('id');
-  const el=document.getElementById('inv-list');
-  const list=data||[];
-  if(!list.length){el.innerHTML='<div class="empty">SIN PRODUCTOS EN INVENTARIO</div>';return;}
-  el.innerHTML=list.map(i=>{
-    if(editInv===i.id)return`<div class="item"><div class="item-info"><div class="item-name">${i.category}</div>${i.subcategory?`<div class="item-sub">${i.subcategory}</div>`:''}</div><div style="display:flex;gap:8px;align-items:center;">${inpN('ei-q',i.quantity)}${inpN('ei-p',i.price)}<button class="btn-ok" onclick="saveInv(${i.id})">✓</button><button class="btn-x" onclick="editInv=null;loadInv()">✕</button></div></div>`;
-    return`<div class="item"><div class="item-info"><div class="item-name">${i.category}</div>${i.subcategory?`<div class="item-sub">${i.subcategory}</div>`:''}</div><div class="item-vals"><span class="val-chip">Cant: ${i.quantity}</span><span class="val-chip">${fmt(i.price)}</span>${isOwner?`<button class="icon-btn icon-edit" onclick="editInv=${i.id};loadInv()">${iEdit}</button><button class="icon-btn icon-del" onclick="delInv(${i.id})">${iDel}</button>`:''}</div></div>`;
+function renderSections(){
+  const container=document.getElementById('sections-container');
+  const audit=document.getElementById('audit-section');
+  // Remove old dynamic sections
+  container.querySelectorAll('.dyn-section').forEach(el=>el.remove());
+  // Re-insert before audit
+  sections.forEach((sec,idx)=>{
+    const el=buildSection(sec,idx);
+    container.insertBefore(el,audit);
+  });
+  // Add "new section" button for editors/owners
+  let addBtn=document.getElementById('add-section-btn');
+  if(addBtn)addBtn.remove();
+  if(canEdit){
+    addBtn=document.createElement('div');
+    addBtn.id='add-section-btn';
+    addBtn.innerHTML=`<button class="btn-add-section" onclick="addSection()">＋ AGREGAR NUEVA SECCIÓN</button>`;
+    container.insertBefore(addBtn,audit);
+  }
+}
+
+function buildSection(sec,idx){
+  const div=document.createElement('section');
+  div.className='dyn-section section-block';
+  div.dataset.id=sec.id;
+  div.dataset.idx=idx;
+  div.draggable=canEdit;
+
+  // Drag events
+  if(canEdit){
+    div.addEventListener('dragstart',e=>{dragSrcIdx=idx;div.classList.add('dragging');e.dataTransfer.effectAllowed='move';});
+    div.addEventListener('dragend',()=>{div.classList.remove('dragging');document.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over'));});
+    div.addEventListener('dragover',e=>{e.preventDefault();div.classList.add('drag-over');});
+    div.addEventListener('dragleave',()=>div.classList.remove('drag-over'));
+    div.addEventListener('drop',e=>{e.preventDefault();div.classList.remove('drag-over');if(dragSrcIdx!==null&&dragSrcIdx!==idx)moveSection(dragSrcIdx,idx);});
+  }
+
+  const editingTitle=sec._editingTitle;
+  const titleHtml=editingTitle
+    ?`<input class="sec-title-input" id="sec-title-${sec.id}" value="${sec.title}" onblur="saveSectionTitle(${sec.id})" onkeydown="if(event.key==='Enter')saveSectionTitle(${sec.id})">`
+    :`<div class="sec-title" ondblclick="${canEdit?`startEditTitle(${sec.id})`:''}" title="${canEdit?'Doble click para editar':''}" style="${canEdit?'cursor:pointer;':''}">${sec.title}</div>`;
+
+  div.innerHTML=`
+    <div class="sec-head">
+      <div class="sec-head-left">
+        ${canEdit?`<div class="drag-handle" title="Arrastrar para reordenar">${iDrag}</div>`:''}
+        ${titleHtml}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        ${canEdit?`<button class="btn-add" onclick="addItem(${sec.id})">+ AGREGAR</button>`:''}
+        ${isOwner?`<button class="btn-del-section" onclick="deleteSection(${sec.id})" title="Eliminar sección">✕</button>`:''}
+      </div>
+    </div>
+    ${!canEdit?`<div class="locked-msg">🔒 Solo editores pueden modificar esta sección</div>`:''}
+    <div id="items-${sec.id}">${renderItems(sec)}</div>
+  `;
+  return div;
+}
+
+function renderItems(sec){
+  if(!sec.items||!sec.items.length)return'<div class="empty">SIN REGISTROS</div>';
+  return sec.items.map(item=>{
+    if(item._editing) return buildItemEditRow(item,sec.id);
+    return`<div class="item" id="item-${item.id}">
+      <div class="item-info">
+        <div class="item-name">${item.name}</div>
+        ${item.subtitle?`<div class="item-sub">${item.subtitle}</div>`:''}
+      </div>
+      <div class="item-vals">
+        ${item.quantity!=null?`<span class="val-chip">Cant: ${item.quantity}</span>`:''}
+        ${item.price!=null?`<span class="val-chip">${fmt(item.price)}</span>`:''}
+        ${canEdit?`<button class="icon-btn icon-edit" onclick="startEditItem(${item.id},${sec.id})">${iEdit}</button><button class="icon-btn icon-del" onclick="deleteItem(${item.id},${sec.id})">${iDel}</button>`:''}
+      </div>
+    </div>`;
   }).join('');
 }
-async function saveInv(id){await sb.from('nt_inventory').update({quantity:parseInt(document.getElementById('ei-q').value)||0,price:parseFloat(document.getElementById('ei-p').value)||0}).eq('id',id);editInv=null;await loadInv();toast('Inventario actualizado');}
-async function delInv(id){if(!confirm('¿Eliminar?'))return;await sb.from('nt_inventory').delete().eq('id',id);await loadInv();toast('Eliminado');}
-async function addInventory(){
-  const cat=document.getElementById('if-cat').value.trim();if(!cat)return;
-  await sb.from('nt_inventory').insert({category:cat,subcategory:document.getElementById('if-sub').value.trim()||null,quantity:parseInt(document.getElementById('if-qty').value)||0,price:parseFloat(document.getElementById('if-price').value)||0});
-  ['if-cat','if-sub','if-qty','if-price'].forEach(i=>document.getElementById(i).value='');
-  await loadInv();toast('Producto agregado');
+
+function buildItemEditRow(item,secId){
+  return`<div class="item">
+    <div style="display:flex;gap:8px;flex:1;flex-wrap:wrap;">
+      <input id="ei-name-${item.id}" value="${(item.name||'').replace(/"/g,'&quot;')}" placeholder="Nombre" style="flex:1;min-width:100px;background:#0a0f14;border:1px solid #2a3d52;border-radius:5px;padding:7px 10px;color:#e2e8f0;font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;">
+      <input id="ei-sub-${item.id}" value="${(item.subtitle||'').replace(/"/g,'&quot;')}" placeholder="Subtítulo" style="flex:1;min-width:80px;background:#0a0f14;border:1px solid #2a3d52;border-radius:5px;padding:7px 10px;color:#e2e8f0;font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;">
+      <input id="ei-qty-${item.id}" type="number" value="${item.quantity||0}" placeholder="Cantidad" style="width:80px;background:#0a0f14;border:1px solid #2a3d52;border-radius:5px;padding:7px 10px;color:#e2e8f0;font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;">
+      <input id="ei-price-${item.id}" type="number" value="${item.price||0}" placeholder="Precio" style="width:90px;background:#0a0f14;border:1px solid #2a3d52;border-radius:5px;padding:7px 10px;color:#e2e8f0;font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;">
+    </div>
+    <button class="btn-ok" onclick="saveItem(${item.id},${secId})">✓</button>
+    <button class="btn-x" onclick="cancelEditItem(${item.id},${secId})">✕</button>
+  </div>`;
+}
+
+// ── SECTION ACTIONS ──
+async function addSection(){
+  const title=prompt('Nombre de la nueva sección:');
+  if(!title||!title.trim())return;
+  const maxOrder=sections.length?Math.max(...sections.map(s=>s.sort_order||0)):0;
+  const {data,error}=await sb.from('nt_sections').insert({title:title.trim(),sort_order:maxOrder+1}).select().single();
+  if(error){toast('Error al crear sección',true);return;}
+  sections.push({...data,items:[]});
+  renderSections();
+  toast('Sección creada');
+}
+
+async function deleteSection(id){
+  if(!isOwner){toast('Solo el propietario puede eliminar secciones',true);return;}
+  if(!confirm('¿Eliminar esta sección y todos sus items?'))return;
+  await sb.from('nt_items').delete().eq('section_id',id);
+  await sb.from('nt_sections').delete().eq('id',id);
+  sections=sections.filter(s=>s.id!==id);
+  renderSections();
+  toast('Sección eliminada');
+}
+
+function startEditTitle(id){
+  const sec=sections.find(s=>s.id===id);
+  if(!sec)return;
+  sec._editingTitle=true;
+  renderSections();
+  setTimeout(()=>{const inp=document.getElementById(`sec-title-${id}`);if(inp){inp.focus();inp.select();}},50);
+}
+
+async function saveSectionTitle(id){
+  const inp=document.getElementById(`sec-title-${id}`);
+  if(!inp)return;
+  const title=inp.value.trim();
+  if(!title)return;
+  await sb.from('nt_sections').update({title}).eq('id',id);
+  const sec=sections.find(s=>s.id===id);
+  if(sec){sec.title=title;sec._editingTitle=false;}
+  renderSections();
+  toast('Nombre actualizado');
+}
+
+async function moveSection(fromIdx,toIdx){
+  const moved=sections.splice(fromIdx,1)[0];
+  sections.splice(toIdx,0,moved);
+  // Update sort orders
+  const updates=sections.map((s,i)=>sb.from('nt_sections').update({sort_order:i+1}).eq('id',s.id));
+  await Promise.all(updates);
+  renderSections();
+}
+
+// ── ITEM ACTIONS ──
+async function addItem(secId){
+  const name=prompt('Nombre del item:');
+  if(!name||!name.trim())return;
+  const sec=sections.find(s=>s.id===secId);
+  const maxOrder=sec&&sec.items.length?Math.max(...sec.items.map(i=>i.sort_order||0)):0;
+  const {data,error}=await sb.from('nt_items').insert({section_id:secId,name:name.trim(),quantity:0,price:0,sort_order:maxOrder+1}).select().single();
+  if(error){toast('Error al agregar',true);return;}
+  if(sec)sec.items.push(data);
+  renderSections();
+  toast('Item agregado');
+}
+
+function startEditItem(itemId,secId){
+  sections.forEach(s=>{if(s.id===secId){s.items.forEach(i=>{if(i.id===itemId)i._editing=true;else i._editing=false;});}});
+  renderSections();
+  setTimeout(()=>{const el=document.getElementById(`ei-name-${itemId}`);if(el)el.focus();},50);
+}
+
+function cancelEditItem(itemId,secId){
+  const sec=sections.find(s=>s.id===secId);
+  if(sec){const item=sec.items.find(i=>i.id===itemId);if(item)item._editing=false;}
+  renderSections();
+}
+
+async function saveItem(itemId,secId){
+  const name=document.getElementById(`ei-name-${itemId}`)?.value||'';
+  const subtitle=document.getElementById(`ei-sub-${itemId}`)?.value||'';
+  const quantity=parseInt(document.getElementById(`ei-qty-${itemId}`)?.value)||0;
+  const price=parseFloat(document.getElementById(`ei-price-${itemId}`)?.value)||0;
+  await sb.from('nt_items').update({name,subtitle,quantity,price}).eq('id',itemId);
+  const sec=sections.find(s=>s.id===secId);
+  if(sec){const item=sec.items.find(i=>i.id===itemId);if(item){Object.assign(item,{name,subtitle,quantity,price,_editing:false});}}
+  renderSections();
+  toast('Item actualizado');
+}
+
+async function deleteItem(itemId,secId){
+  if(!confirm('¿Eliminar?'))return;
+  await sb.from('nt_items').delete().eq('id',itemId);
+  const sec=sections.find(s=>s.id===secId);
+  if(sec)sec.items=sec.items.filter(i=>i.id!==itemId);
+  renderSections();
+  toast('Item eliminado');
 }
 
 // ── USERS / AUDITORÍA ──
@@ -473,36 +577,24 @@ async function loadAdm(){
         <div class="user-card-name">${u.name}${isMe?' <span style="font-size:10px;color:var(--muted);">(tú)</span>':''}</div>
         <div class="user-card-email">${u.email}</div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        ${pendingBadge}${roleBadge}${actions}
-      </div>
+      <div style="display:flex;align-items:center;gap:8px;">${pendingBadge}${roleBadge}${actions}</div>
     </div>`;
   }).join('');
 }
 
-async function authorizeUser(id){
-  await sb.from('nt_users').update({authorized:true,role:'viewer'}).eq('id',id);
-  await loadAdm();toast('Usuario autorizado ✓');
-}
-async function revokeUser(id){
-  if(!confirm('¿Revocar acceso?'))return;
-  await sb.from('nt_users').update({authorized:false}).eq('id',id);
-  await loadAdm();toast('Acceso revocado');
-}
+async function authorizeUser(id){await sb.from('nt_users').update({authorized:true,role:'viewer'}).eq('id',id);await loadAdm();toast('Usuario autorizado ✓');}
+async function revokeUser(id){if(!confirm('¿Revocar acceso?'))return;await sb.from('nt_users').update({authorized:false}).eq('id',id);await loadAdm();toast('Acceso revocado');}
 async function changeRole(id,current){
   const roles=['viewer','editor'];
   const next=roles[(roles.indexOf(current)+1)%roles.length];
   await sb.from('nt_users').update({role:next}).eq('id',id);
-  await loadAdm();toast('Rol actualizado: '+roleLabels[next]);
+  await loadAdm();toast('Rol: '+roleLabels[next]);
 }
 
 // ── INIT ──
 sb.auth.onAuthStateChange(async(event,session)=>{
-  if(event==='SIGNED_IN'||event==='INITIAL_SESSION'){
-    await handleSession(session);
-  } else if(event==='SIGNED_OUT'){
-    showScreen('login');
-  }
+  if(event==='SIGNED_IN'||event==='INITIAL_SESSION'){await handleSession(session);}
+  else if(event==='SIGNED_OUT'){showScreen('login');}
 });
 </script>
 </body>
