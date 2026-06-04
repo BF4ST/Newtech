@@ -278,11 +278,11 @@ main{max-width:860px;margin:0 auto;padding:36px 24px;display:flex;flex-direction
     <button class="modal-close" onclick="closeProfileModal()">✕</button>
     <div class="modal-title">EDITAR PERFIL</div>
     <div class="mfield">
-      <label>Nombre Público</label>
+      <label for="p-name">Nombre Público</label>
       <input type="text" id="p-name" placeholder="Tu nombre">
     </div>
     <div class="mfield">
-      <label>URL de Foto de Perfil</label>
+      <label for="p-avatar">URL de Foto de Perfil</label>
       <input type="text" id="p-avatar" placeholder="https://ejemplo.com/foto.jpg">
     </div>
     <button class="btn-primary" onclick="saveProfile()">GUARDAR CAMBIOS</button>
@@ -361,8 +361,25 @@ async function handleSession(session){
   const email=gUser.email;
   
   // Buscar usuario en nuestra tabla personalizada
-  let {data:u, error}=await sb.from('nt_users').select('*').eq('email',email).single();
+  let u, error;
+  try {
+    const res = await sb.from('nt_users').select('*').eq('email',email).single();
+    u = res.data;
+    error = res.error;
+  } catch (e) {
+    console.error("Error crítico al buscar usuario:", e);
+    toast("Error al verificar usuario. ¿Tablas creadas?", true);
+    showScreen('login');
+    return;
+  }
   
+  if(error && error.code !== 'PGRST116') { // PGRST116 es "no rows found", eso está bien para nuevos
+    console.error("Error Supabase:", error);
+    toast("Error de base de datos: " + error.message, true);
+    showScreen('login');
+    return;
+  }
+
   if(!u){
     // Nuevo usuario: Registrar pero NO autorizar (a menos que sea el dueño)
     const name=gUser.user_metadata?.full_name||email;
@@ -508,8 +525,15 @@ async function changeRole(id,current){
 // LÓGICA DE INVENTARIO
 // ══════════════════════════════════
 async function loadAll(){
-  await loadSections();
-  await loadAdm();
+  try {
+    await loadSections();
+    await loadAdm();
+  } catch (err) {
+    console.error("Error cargando datos:", err);
+    toast("Error de conexión con la base de datos", true);
+    // Si hay error crítico, mostramos dashboard pero con aviso
+    showScreen('dashboard');
+  }
 }
 async function loadSections(){
   const {data:secs}=await sb.from('nt_sections').select('*').order('sort_order');
